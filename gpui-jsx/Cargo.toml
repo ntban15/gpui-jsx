@@ -1,0 +1,10 @@
+[package]
+name = "gpui-jsx"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "JSX-like syntax for GPUI: a thin proc macro expanding to fluent builder calls"
+
+[dependencies]
+gpui = { git = "https://github.com/zed-industries/zed", rev = "483b746b568256e125538769ce5474a5347069a3" }
+gpui-jsx-macros = { path = "../gpui-jsx-macros", version = "0.1.0" }
