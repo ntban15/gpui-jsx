@@ -298,6 +298,9 @@ impl Render for TodoApp {
 // ---------- entry point ----------
 
 fn main() {
+    // Keep gpui's own warnings visible — e.g. "compiled without the font-kit
+    // feature, so no text will be rendered" explains a totally blank window.
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     application().run(|cx: &mut App| {
         let bounds = Bounds::centered(None, size(px(560.), px(640.)), cx);
         cx.open_window(

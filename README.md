@@ -1,11 +1,21 @@
 # gpui-jsx
 
-**macOS prerequisite:** GPUI needs the Metal Toolchain to build.
-If `gpui_apple` fails with `cannot execute tool 'metal'`, install it:
+**macOS prerequisites:**
 
-```
-xcodebuild -downloadComponent MetalToolchain
-```
+1. GPUI needs the Metal Toolchain to build.
+   If `gpui_apple` fails with `cannot execute tool 'metal'`, install it:
+
+   ```
+   xcodebuild -downloadComponent MetalToolchain
+   ```
+
+2. GPUI needs `font-kit` to render text — it's an opt-in feature on
+   `gpui_platform` (`font-kit = ["gpui_macos/font-kit"]`). Without it the app
+   opens, layout works, and **no text appears anywhere** (only a
+   `WARN gpui_macos::platform: gpui_macos was compiled without the `font-kit`
+   feature, so no text will be rendered.` is emitted, which you'll never see
+   without a logger). The `todo` example enables it. If something looks
+   text-free in your fork, check this first and init `env_logger` in `main`.
 
 then `cargo run -p todo`.
 

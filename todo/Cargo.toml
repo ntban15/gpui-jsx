@@ -7,5 +7,7 @@ publish = false
 
 [dependencies]
 gpui = { git = "https://github.com/zed-industries/zed", rev = "483b746b568256e125538769ce5474a5347069a3" }
-gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "483b746b568256e125538769ce5474a5347069a3" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "483b746b568256e125538769ce5474a5347069a3", features = ["font-kit"] }
 gpui-jsx = { path = "../gpui-jsx" }
+env_logger = "0.11"
+log = "0.4"
