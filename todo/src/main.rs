@@ -121,19 +121,14 @@ impl Render for TodoApp {
 
         jsx! {
             <div
-                size-full
-                flex
-                flex-col
-                px-6
-                py-5
-                gap-4
+                class="size-full flex flex-col px-6 py-5 gap-4"
                 bg={rgb(0x1e1e2e)}
                 text_color={rgb(0xcdd6f4)}
             >
                 // header
-                <div flex flex-col>
-                    <div text-3xl>"todos"</div>
-                    <div text-color={rgb(0x6c7086)} text-sm>
+                <div class="flex flex-col">
+                    <div class="text-3xl">"todos"</div>
+                    <div class="text-sm" text-color={rgb(0x6c7086)}>
                         {format!("{remaining} active, {done_count} done")}
                     </div>
                 </div>
@@ -165,15 +160,8 @@ impl Render for TodoApp {
                             }
                         }
                     }}
-                    flex
-                    items-center
-                    gap-3
-                    w-full
-                    h-11
-                    px-4
-                    rounded-md
+                    class="flex items-center gap-3 w-full h-11 px-4 rounded-md border-1"
                     bg={rgb(0x313244)}
-                    border_1
                     border_color={rgb(0x45475a)}
                 >
                     <div text-color={rgb(0xa6e3a1)}>"▸"</div>
@@ -185,7 +173,7 @@ impl Render for TodoApp {
                 </div>
 
                 // list
-                <div id="todo-list" flex flex-col flex-1 overflow-y-scroll gap-2>
+                <div id="todo-list" class="flex flex-col flex-1 overflow-y-scroll gap-2">
                     {rows.iter().map(|(id, text, done)| {
                         let id = *id;
                         let text = text.clone();
@@ -193,23 +181,12 @@ impl Render for TodoApp {
                             <div
                                 id={format!("todo-{id}")}
                                 on_click={move |this, _event: &ClickEvent, _window, cx| this.toggle(id, cx)}
-                                flex
-                                items-center
-                                gap-3
-                                w-full
-                                px-4
-                                py-2
-                                rounded-md
+                                class="flex items-center gap-3 w-full px-4 py-2 rounded-md"
                                 bg={rgb(0x313244)}
                                 hover={|style| style.bg(rgb(0x45475a))}
                             >
                                 <div
-                                    flex
-                                    items-center
-                                    justify-center
-                                    size-5
-                                    rounded-md
-                                    border_1
+                                    class="flex items-center justify-center size-5 rounded-md border-1"
                                     border_color={if *done { rgb(0xa6e3a1) } else { rgb(0x6c7086) }}
                                     bg={if *done { rgb(0xa6e3a1) } else { rgb(0x313244) }}
                                     text_color={rgb(0x1e1e2e)}
@@ -227,11 +204,7 @@ impl Render for TodoApp {
                                         cx.stop_propagation();
                                         this.remove(id, cx);
                                     }}
-                                    flex
-                                    items-center
-                                    justify-center
-                                    size-6
-                                    rounded-md
+                                    class="flex items-center justify-center size-6 rounded-md"
                                     text_color={rgb(0x6c7086)}
                                     hover={|style| style.bg(rgb(0x45475a))}
                                 >
@@ -243,8 +216,8 @@ impl Render for TodoApp {
                 </div>
 
                 // footer: filters + clear completed
-                <div flex items-center justify-between gap-3>
-                    <div flex gap-2>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex gap-2">
                         {[
                             (Filter::All, "all"),
                             (Filter::Active, "active"),
@@ -260,10 +233,7 @@ impl Render for TodoApp {
                                         this.filter = filter;
                                         cx.notify();
                                     }}
-                                    px-3
-                                    py-1
-                                    rounded-md
-                                    text-sm
+                                    class="px-3 py-1 rounded-md text-sm"
                                     bg={if selected { rgb(0x89b4fa) } else { rgb(0x313244) }}
                                     text_color={if selected { rgb(0x1e1e2e) } else { rgb(0xcdd6f4) }}
                                 >
@@ -278,10 +248,7 @@ impl Render for TodoApp {
                             <div
                                 id="clear-completed"
                                 on_click={|this, _event: &ClickEvent, _window, cx| this.clear_completed(cx)}
-                                px-3
-                                py-1
-                                rounded-md
-                                text-sm
+                                class="px-3 py-1 rounded-md text-sm"
                                 text_color={rgb(0x6c7086)}
                                 hover={|style| style.text_color(rgb(0xf38ba8))}
                             >

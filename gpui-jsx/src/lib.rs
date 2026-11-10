@@ -5,8 +5,8 @@
 //!
 //! fn render(cx: &mut Context<Self>) -> impl IntoElement {
 //!     jsx! {
-//!         <div flex flex-col gap-3>
-//!             <div text-xl>"todos"</div>
+//!         <div class="flex flex-col gap-3">
+//!             <div class="text-xl">"todos"</div>
 //!             {self.todos.iter().map(|todo| jsx! { /* ... */ }).collect::<Vec<_>>()}
 //!         </div>
 //!     }
@@ -20,10 +20,8 @@
 //!
 //! | JSX | Expansion |
 //! |---|---|
-//! | `<div flex>` | `::gpui::div().flex()` |
-//! | `<div gap-3 />` | `.gap_3()` (kebab-case normalizes to snake_case) |
-//! | `<div class="flex gap-3">` | `.flex().gap_3()` |
-//! | `<div bg={rgb(0x505050)}>` | `.bg(rgb(0x505050))` |
+//! | `<div class="flex flex-row gap-3">` | `::gpui::div().flex().flex_row().gap_3()` — styling goes through `class=` only |
+//! | `<div bg={rgb(0x505050)}>` | `.bg(rgb(0x505050))` — valued attributes become method calls |
 //! | `<div id="x" />` (alias `key=`) | `.id("x")` — makes the element stateful |
 //! | `<div track_focus={&self.focus_handle}>` | `.track_focus(&self.focus_handle)` |
 //! | `<div on_click={\|this, ev, window, cx\| …}>` | `.on_click(cx.listener(..))` — auto-wrapped when the value is a closure |
@@ -33,13 +31,14 @@
 //! | `<div>{cond.then(\|\| jsx! {…})}</div>` | renders when `Some` |
 //!
 //! Attribute notes:
-//! * `overflow_y_scroll` and other stateful-only methods (those defined on
+//! * styling goes through `class=` only — bare attributes like `<div flex>` are a
+//!   compile error pointing at `class=`. Class names map kebab-case to snake_case
+//!   method names (`text-3xl` → `text_3xl()`); valued styles (`bg={..}`,
+//!   `text_color={..}`) stay explicit attributes, like React's `style={{..}}`.
+//! * `overflow-y-scroll` and other stateful-only methods (those defined on
 //!   `StatefulInteractiveElement`, e.g. `.overflow_y_scroll()`,
 //!   `.on_click(...)`) only compile on `<div id="…">` — GPUI requires a stateful
 //!   element there.
-//! * `stroke-line-separator` style dashed-name attributes map to snake_case
-//!   method names; `text-3xl`-style number-suffixed attributes work too
-//!   (`text_3xl`).
 //!
 //! Raw text must be in quotes (`"label"`) or braces (`{expr}`).
 //!

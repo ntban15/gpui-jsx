@@ -4,7 +4,7 @@
 //!
 //! ```ignore
 //! jsx! {
-//!     <div flex flex-row gap-3 on-click={|this, _ev, _window, cx| { /* ... */ }}>
+//!     <div class="flex flex-row gap-3" id="root" on_click={|this, ev, window, cx| { /* ... */ }}>
 //!         "hello"
 //!     </div>
 //! }
@@ -13,21 +13,24 @@
 //! expands roughly to:
 //!
 //! ```ignore
-//! ::gpui::div().flex().flex_row().gap_3().on_click(cx.listener(|this, _ev, _window, cx| { /* ... */ }))
-//!     .jsx_children([...].concat())
+//! ::gpui::div().flex().flex_row().gap_3().id("root").on_click(cx.listener(|this, ev, window, cx| { /* ... */ }))
+//!     .extend_children([...])
 //! ```
 //!
 //! Rules (see the `gpui-jsx` crate docs for the full table):
 //!
 //! * lowercase tag `<div>` -> `::gpui::div()`
-//! * bare attribute `flex` -> `.flex()`; kebab-case `gap-3` -> `.gap_3()`
-//! * `class="flex gap-3"`  -> `.flex().gap_3()`
+//! * `class="flex gap-3"` -> `.flex().gap_3()` — the ONLY way to apply styling,
+//!   like Tailwind's `className` in React (kebab-case maps to snake_case methods)
 //! * `id="name"` / `id={expr}` (alias `key=`) -> `.id(...)` (makes the element stateful)
 //! * `on_click={|this, ev, window, cx| ...}` -> `.on_click(cx.listener(...))`
 //!   (auto-wrapped when the value starts with a closure; passing an already-wrapped
 //!   expression such as `cx.listener(...)` also works)
 //! * any other `name={expr}` / `name="str"` -> `.name(expr)` — type-checked against
 //!   GPUI's builder methods, so unknown attribute names are compile errors
+//! * `hover={|style| style.bg(...)}` -> `.hover(|style| ...)` — GPUI's `hover` closure
+//!   takes precedence over `class=` for state-dependent styling
+//! * bare attributes (`flex`, `gap-3`) are a compile error with a pointer to `class=`
 //! * children: nested elements, `"string literals"`, and `{expressions}`; expressions
 //!   are converted with `IntoChild` and may be elements, `Vec<element>`s, `Option`s
 //!   or `()` (numbers render as text)
@@ -48,15 +51,12 @@ struct Element {
     children: Vec<Child>,
 }
 
+#[derive(Debug)]
 enum Attr {
-    /// `flex` -> `.flex()`
-    Flag(Ident),
-    /// `gap-3` -> `.gap_3()` (name already snake_cased by the parser)
-    FlagRaw(String),
-    /// any other `name=expr` -> `.name(expr)`
-    Value(Ident, TokenStream2),
     /// `class="flex gap-3"` -> `.flex().gap_3()`
     Class(Vec<String>),
+    /// any other `name=expr` -> `.name(expr)` (name already snake_cased by the parser)
+    Value(Ident, TokenStream2),
 }
 
 enum Child {
@@ -180,6 +180,12 @@ fn parse_attr(input: ParseStream) -> syn::Result<Attr> {
             .map(|s| s.replace('-', "_"))
             .collect::<Vec<_>>();
         for name in &names {
+            if !name.chars().next().is_some_and(|c| c.is_alphabetic() || c == '_') {
+                return Err(syn::Error::new(
+                    lit.span(),
+                    format!("unsupported class name `{name}` (must start with a letter or `_`)"),
+                ));
+            }
             for c in name.chars() {
                 if !c.is_alphanumeric() && c != '_' {
                     return Err(syn::Error::new(
@@ -203,11 +209,17 @@ fn parse_attr(input: ParseStream) -> syn::Result<Attr> {
         return Ok(Attr::Value(name, value));
     }
 
-    if parts.len() > 1 {
-        Ok(Attr::FlagRaw(snake_from_kebab(&parts)))
-    } else {
-        Ok(Attr::Flag(first))
-    }
+    // Bare attributes (`<div flex>` / `<div gap-3>`) are deliberately rejected —
+    // styling goes through `class="..."` only, like React's `className`.
+    Err(syn::Error::new(
+        first.span(),
+        format!(
+            "bare attribute `{}` is not supported; use class=\"{}\" for styling \
+             (e.g. class=\"flex gap-3\"), or name={{expr}} for a valued attribute",
+            snake_from_kebab(&parts),
+            snake_from_kebab(&parts),
+        ),
+    ))
 }
 
 /// `attr={expr}` or `attr="literal"` (or a bare number).
@@ -251,11 +263,6 @@ impl LitSpan for syn::Lit {
 
 fn expand_attr(attr: &Attr) -> TokenStream2 {
     match attr {
-        Attr::Flag(name) => quote! { .#name() },
-        Attr::FlagRaw(name) => {
-            let ident = Ident::new(name, proc_macro2::Span::call_site());
-            quote! { .#ident() }
-        }
         Attr::Class(names) => {
             let mut out = TokenStream2::new();
             for name in names {
@@ -321,4 +328,51 @@ fn expand_element(el: &Element) -> TokenStream2 {
 pub fn jsx(input: TokenStream) -> TokenStream {
     let parsed = syn::parse_macro_input!(input as Element);
     expand_element(&parsed).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn attrs(input: &str) -> Result<Vec<Attr>, syn::Error> {
+        // wrap the attribute list in a fake element
+        let src = format!("<div {input} />");
+        syn::parse_str::<Element>(&src).map(|el| el.attrs)
+    }
+
+    #[test]
+    fn bare_attribute_is_rejected_with_pointer_to_class() {
+        let err = attrs("flex").unwrap_err().to_string();
+        assert!(err.contains("class=\"flex\""), "unexpected message: {err}");
+    }
+
+    #[test]
+    fn bare_kebab_attribute_is_rejected() {
+        let err = attrs("gap-3").unwrap_err().to_string();
+        assert!(err.contains("class=\"gap_3\""), "unexpected message: {err}");
+    }
+
+    #[test]
+    fn class_kebab_names_become_snake_case() {
+        let attrs = attrs("class=\"flex flex-col gap-3 text-3xl overflow-y-scroll border-1\"").unwrap();
+        match &attrs[..] {
+            [Attr::Class(names)] => {
+                assert_eq!(names, &["flex", "flex_col", "gap_3", "text_3xl", "overflow_y_scroll", "border_1"]);
+            }
+            other => panic!("expected single Class attr, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn class_rejects_bad_idents() {
+        assert!(attrs("class=\"gap 3\"").is_err());
+        assert!(attrs("class=\"gap_3!\"").is_err());
+    }
+
+    #[test]
+    fn valued_attrs_still_work() {
+        let attrs = attrs(r#"id="root" on_click={|this, ev, window, cx| {}} bg={rgb(1)}"#).unwrap();
+        assert!(matches!(attrs.as_slice(), [Attr::Value(a, _), Attr::Value(b, _), Attr::Value(c, _)]
+            if a == "id" && b == "on_click" && c == "bg"));
+    }
 }

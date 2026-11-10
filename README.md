@@ -25,8 +25,8 @@ to GPUI's fluent builder calls, so everything stays type-checked by rustc.
 ```rust
 fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
     jsx! {
-        <div flex flex-col gap-3 size-full>
-            <div text-xl>"hi"</div>
+        <div class="flex flex-col gap-3 size-full">
+            <div class="text-xl">"hi"</div>
         </div>
     }
 }
@@ -35,33 +35,38 @@ fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoE
 expands to
 
 ```rust
-::gpui::div().flex().flex_col().gap_3().size_full()
-    .jsx_children(["hi".into_any_child()].concat())
+::gpui_jsx::extend_children(::gpui::div().flex().flex_col().gap_3().size_full(), vec![
+    ::gpui_jsx::IntoChild::into_any_child("hi"),
+])
 ```
 
 * GPUI on crates.io is an abandoned unrelated package; `zed`'s GPUI is pulled
   in from git, pinned to a known-good rev.
 * `gpui-jsx` — the runtime half: re-exports `jsx!`, plus the `IntoChild`
-  trait (what `{expr}` children may be) and the `JsxChildrenExt::jsx_children`
-  builder extension used by the expansion.
+  trait (what `{expr}` children may be) and `extend_children`, used by the
+  expansion.
 * `gpui-jsx-macros` — the proc macro itself.
 * `todo/` — a demo app written in the JSX syntax. `cargo run -p todo`
 
 ## Crate boundaries
 
-The macro emits `::gpui::…` and `::gpui_jsx::…` paths directly. Attribute
+The macro emits `::gpui::…` and `::gpui_jsx::…` paths directly. Styling class
 names become method calls (`gap-3` → `.gap_3()`), so rustc validates them.
 
 ## Syntax
 
+**Styling goes through `class=` only** (like React's `className` with Tailwind);
+bare attributes such as `<div flex>` are a compile error with a pointer to
+`class=`. Valued styles (`bg={...}`) remain explicit attributes, like React's
+`style={{...}}`.
+
 | JSX | Expansion |
 |---|---|
-| `<div flex>` | `::gpui::div().flex()` |
-| `<div gap-3 />` | `.gap_3()` |
-| `<div class="flex gap-3">` | `.flex().gap_3()` |
+| `<div class="flex flex-col gap-3">` | `.flex().flex_col().gap_3()` (kebab → snake_case) |
 | `<div bg={rgb(0x505050)}>` | `.bg(rgb(0x505050))` |
 | `<div id="x" />` / `key="x"` | `.id("x")` — stateful element |
 | `<div track_focus={&self.focus_handle}>` | `.track_focus(&self.focus_handle)` |
+| `<div hover={\|s\| s.bg(rgb(0x313244))}>` | `.hover(\|s\| ...)` — state-dependent styling |
 | `<div on_click={\|this, ev, window, cx\| …}>` | `.on_click(cx.listener(\|this, ev, window, cx\| …))` |
 | `<div>"text"</div>` | text child |
 | `<div>{expr}</div>` | `expr` via `IntoChild` (elements, `Vec`/`Option` of elements, numbers, strings) |
