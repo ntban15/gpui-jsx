@@ -1205,6 +1205,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "examples"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "gpui",
+ "gpui-jsx",
+ "gpui_platform",
+ "log",
+]
+
+[[package]]
 name = "exr"
 version = "1.74.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4664,17 +4675,6 @@ name = "tinyvec"
 version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
-
-[[package]]
-name = "todo"
-version = "0.1.0"
-dependencies = [
- "env_logger",
- "gpui",
- "gpui-jsx",
- "gpui_platform",
- "log",
-]
 
 [[package]]
 name = "tokio"

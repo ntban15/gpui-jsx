@@ -1,9 +1,14 @@
 [package]
-name = "todo"
+name = "examples"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 publish = false
+
+# Example apps live in this package's examples/ directory (cargo's
+# auto-discovered example targets). Add a new demo by dropping a file in
+# examples/ — it becomes runnable with:
+#   cargo run -p examples --example todo
 
 [dependencies]
 gpui = { git = "https://github.com/zed-industries/zed", rev = "483b746b568256e125538769ce5474a5347069a3" }

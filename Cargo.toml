@@ -1,5 +1,5 @@
 [workspace]
-members = ["gpui-jsx", "gpui-jsx-macros", "todo"]
+members = ["gpui-jsx", "gpui-jsx-macros", "examples"]
 resolver = "2"
 
 [workspace.package]

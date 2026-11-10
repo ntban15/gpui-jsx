@@ -14,10 +14,10 @@
    opens, layout works, and **no text appears anywhere** (only a
    `WARN gpui_macos::platform: gpui_macos was compiled without the `font-kit`
    feature, so no text will be rendered.` is emitted, which you'll never see
-   without a logger). The `todo` example enables it. If something looks
+   without a logger). The `examples` package enables it. If something looks
    text-free in your fork, check this first and init `env_logger` in `main`.
 
-then `cargo run -p todo`.
+then `cargo run -p examples --example todo`.
 
 JSX-like syntax for [GPUI](https://gpui.rs) — a thin proc macro that expands
 to GPUI's fluent builder calls, so everything stays type-checked by rustc.
@@ -46,7 +46,7 @@ expands to
   trait (what `{expr}` children may be) and `extend_children`, used by the
   expansion.
 * `gpui-jsx-macros` — the proc macro itself.
-* `todo/` — a demo app written in the JSX syntax. `cargo run -p todo`
+* `examples/` — demo apps written in the JSX syntax; one file per example under `examples/examples/` (cargo auto-discovery). `cargo run -p examples --example todo`
 
 ## Crate boundaries
 
